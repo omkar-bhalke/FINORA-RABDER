@@ -69,6 +69,12 @@ test(
         );
         const logged = (await target.once("value")).val();
         assert.equal(logged.state, "accepted");
+        assert.equal(logged.statement.expenses, 100);
+        assert.equal(logged.statement.parameters[3], "1");
+        assert.deepEqual(
+          logged.events.map((e) => e.kind),
+          ["generated", "send_attempt", "accepted"],
+        );
         assert.equal(logged.zone, "Asia/Kolkata");
         assert.equal(logged.scheduledAt, period);
         assert.ok(

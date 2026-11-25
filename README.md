@@ -1,4 +1,4 @@
-# FINOR-RABDER
+# FINORA-RABDER
 
 TypeScript / Node 22 automation service for FINORA. Firebase Admin reads the same `users/{uid}/transactions` and `reportPreferences/daily` schema used by FINORA-112. Financial values use integer paise. No bank credentials are accepted.
 

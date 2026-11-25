@@ -24,6 +24,8 @@ export async function flushActivity() {
       String(doc.updateTime.nanoseconds).padStart(9, "0");
     const row = {
       rev,
+      statement: d.statement ?? null,
+      events: d.events ?? null,
       scheduledAt: d.end,
       generatedAt: d.generatedAt ?? null,
       acceptedAt: d.acceptedAt ?? null,

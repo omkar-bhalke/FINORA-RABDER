@@ -7,26 +7,6 @@ envVarGroups:
         value: "false"
       - key: FIREBASE_DATABASE_URL
         value: https://finoraaaaaa-default-rtdb.asia-southeast1.firebasedatabase.app
-      - key: FIREBASE_SERVICE_ACCOUNT
-        sync: false
-      - key: FIREBASE_STORAGE_BUCKET
-        sync: false
-      - key: META_APP_SECRET
-        sync: false
-      - key: META_VERIFY_TOKEN
-        sync: false
-      - key: META_ACCESS_TOKEN
-        sync: false
-      - key: META_PHONE_NUMBER_ID
-        sync: false
-      - key: META_BUSINESS_NUMBER
-        sync: false
-      - key: META_GRAPH_VERSION
-        sync: false
-      - key: META_DETAIL_TEMPLATE
-        sync: false
-      - key: META_TEMPLATE
-        sync: false
 services:
   - type: web
     name: finora-api

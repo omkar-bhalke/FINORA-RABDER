@@ -4,6 +4,7 @@ import { dueSlot, summarize, rupees, details } from "./report.js";
 import { DateTime } from "luxon";
 import {
   FieldPath,
+  FieldValue,
   type QueryDocumentSnapshot,
 } from "firebase-admin/firestore";
 import { setTimeout as delay } from "node:timers/promises";
@@ -129,9 +130,24 @@ export async function send(
       return false;
     if (h && (h.state !== "retryable" || h.retryAt > now || h.attempts >= 3))
       return false;
+    const at = Date.now();
     t.set(history, {
+      statement: {
+        income: summary.income,
+        expenses: summary.expenses,
+        count: summary.count,
+        template: payload.template.name,
+        language: payload.template.language.code,
+        parameters,
+        recipientEnding: p.recipient.slice(-4),
+      },
+      events: [
+        ...(h?.events ?? []),
+        { kind: "generated", at },
+        { kind: "send_attempt", at },
+      ],
       state: "sending",
-      generatedAt: Date.now(),
+      generatedAt: at,
       zone: p.zone,
       logPending: true,
       start: slot.start,
@@ -165,6 +181,11 @@ export async function send(
       await history.update({
         state,
         httpStatus: response.status,
+        events: FieldValue.arrayUnion({
+          kind: state,
+          at: Date.now(),
+          httpStatus: response.status,
+        }),
         logPending: true,
         updatedAt: Date.now(),
         retryAt: Date.now() + 120000,
@@ -177,6 +198,7 @@ export async function send(
     batch.update(history, {
       state: "accepted",
       acceptedAt: Date.now(),
+      events: FieldValue.arrayUnion({ kind: "accepted", at: Date.now() }),
       logPending: true,
       message,
       updatedAt: Date.now(),
@@ -188,6 +210,7 @@ export async function send(
   } catch {
     await history.update({
       state: "unknown",
+      events: FieldValue.arrayUnion({ kind: "unknown", at: Date.now() }),
       logPending: true,
       updatedAt: Date.now(),
     });

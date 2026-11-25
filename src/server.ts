@@ -1,4 +1,5 @@
 import { activityDb } from "./activity.js";
+import { FieldValue } from "firebase-admin/firestore";
 import express from "express";
 import { getStorage } from "firebase-admin/storage";
 import rateLimit from "express-rate-limit";
@@ -96,13 +97,15 @@ app.post(
               delivered: 3,
               read: 4,
             };
-            if (prev && (ranks[prev.delivery] ?? 0) < ranks[status.status])
-              t.update(report, {
-                delivery: status.status,
-                logPending: true,
-                updatedAt: Date.now(),
-                deliveryAt: Number(status.timestamp) * 1000,
-              });
+            const at = Number(status.timestamp) * 1000;
+            if (!prev || !Number.isSafeInteger(at) || at <= 0) return;
+            const advances = (ranks[prev.delivery] ?? 0) < ranks[status.status];
+            t.update(report, {
+              ...(advances ? { delivery: status.status, deliveryAt: at } : {}),
+              events: FieldValue.arrayUnion({ kind: status.status, at }),
+              logPending: true,
+              updatedAt: Date.now(),
+            });
           });
         }
       }
