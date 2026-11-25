@@ -21,3 +21,9 @@ The /v1 endpoints require a Firebase ID token in Authorization: Bearer and a Fir
 The worker uses local calendar dates and the configured IANA time zone. Each due slot covers exactly 86,400,000 milliseconds. Each user and local report date has one outbox record, claimed transactionally. A fifteen-minute catch-up window tolerates short outages. Explicit throttling responses are retried. Ambiguous network responses require operator review, because Meta may already have accepted the message. There is no automatic replay of an ambiguous send. Webhook updates are monotonic.
 
 The tests cover time offsets, duration, invalid schedules and numeric validation. Live Render deployment, Meta template approval, end-to-end Firebase authentication and production message delivery require external setup. Keep outbound sends disabled during integration testing.
+
+Use an additional approved template named by META_DETAIL_TEMPLATE for optional report sections. Its fifth body parameter carries the user's selected category, budget, calculated balance and transaction details. Long transaction lists include an omitted-count notice. Balances require a manually recorded starting balance. Set FIREBASE_STORAGE_BUCKET to the bucket in the Android Firebase registration.
+
+DELETE /v1/account requires a sign-in in the last five minutes. It removes the profile image, per-user Firestore records, challenge records and Firebase Auth account. Provide Firebase Admin permissions only on the intended project.
+
+The emulator integration test injects a mock transport and exercises concurrent scheduling, verification gating and revocation without contacting Meta. Run FIRESTORE_EMULATOR_HOST=127.0.0.1:8181 npm test against a local emulator. Without an emulator, the integration test is skipped.

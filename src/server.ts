@@ -1,4 +1,5 @@
 import express from 'express';
+import {getStorage} from 'firebase-admin/storage';
 import rateLimit from 'express-rate-limit';
 import {createHash,createHmac,randomBytes,timingSafeEqual} from 'node:crypto';
 import {db,auth,appCheck,need} from './firebase.js';
@@ -50,7 +51,7 @@ app.use('/v1',rateLimit({windowMs:60000,limit:60}),async(req,res,next)=>{
   try{
     const id=await auth.verifyIdToken((req.get('authorization')||'').replace(/^Bearer /,''),true);
     await appCheck.verifyToken(req.get('X-Firebase-AppCheck')||'');
-    res.locals.uid=id.uid;next();
+    res.locals.uid=id.uid;res.locals.authTime=id.auth_time;next();
   }catch{res.sendStatus(401)}
 });
 app.get('/v1/preview',async(_req,res)=>{
@@ -70,6 +71,19 @@ app.get('/v1/status',async(_req,res)=>{
   const user=db.doc('users/'+res.locals.uid);
   const [verified,pref,history]=await Promise.all([user.collection('integrations').doc('recipient').get(),user.collection('reportPreferences').doc('daily').get(),user.collection('reportHistory').orderBy('end','desc').limit(20).get()]);
   res.json({verified:verified.get('verified')===true && verified.get('recipient')===pref.get('recipient'),enabled:process.env.LIVE_REPORTS==='true',history:history.docs.map(d=>d.data())});
+});
+app.delete('/v1/account',async(req,res)=>{
+  if(Date.now()/1000-res.locals.authTime>300){res.status(403).json({error:'Sign in again to delete the account'});return}
+  const uid=res.locals.uid, user=db.doc('users/'+uid);
+  const bucket=need('FIREBASE_STORAGE_BUCKET');
+  await getStorage().bucket(bucket).file('users/'+uid+'/avatar.jpg').delete({ignoreNotFound:true});
+  const reports=await user.collection('reportHistory').get();
+  for(const report of reports.docs){const id=report.get('message');if(typeof id==='string')await db.collection('outboundMessages').doc(id).delete()}
+  await db.recursiveDelete(user);
+  const challenges=await db.collection('recipientChallenges').where('uid','==',uid).get();
+  for(const doc of challenges.docs)await doc.ref.delete();
+  await auth.deleteUser(uid);
+  res.sendStatus(204);
 });
 app.use(((err,req,res,next)=>{console.error('request_failed');res.sendStatus(500)}) as express.ErrorRequestHandler);
 app.listen(Number(process.env.PORT||3000));

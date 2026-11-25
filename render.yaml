@@ -7,6 +7,8 @@ envVarGroups:
         value: "false"
       - key: FIREBASE_SERVICE_ACCOUNT
         sync: false
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false
       - key: META_APP_SECRET
         sync: false
       - key: META_VERIFY_TOKEN
@@ -18,6 +20,8 @@ envVarGroups:
       - key: META_BUSINESS_NUMBER
         sync: false
       - key: META_GRAPH_VERSION
+        sync: false
+      - key: META_DETAIL_TEMPLATE
         sync: false
       - key: META_TEMPLATE
         sync: false
