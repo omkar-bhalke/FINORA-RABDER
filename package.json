@@ -1,6 +1,27 @@
 {
-  "name":"finor-rabder","private":true,"type":"module","version":"0.1.0","engines":{"node":">=22"},
-  "scripts":{"build":"tsc","start":"node dist/server.js","worker":"node dist/worker.js","test":"npm run build && node --test test/*.test.mjs"},
-  "dependencies":{"express":"^5.1.0","express-rate-limit":"^8.0.0","firebase-admin":"^13.4.0","luxon":"^3.6.1"},
-  "devDependencies":{"@types/express":"^5.0.0","@types/luxon":"^3.6.0","@types/node":"^22.0.0","typescript":"^5.8.0"}
+  "name": "finor-rabder",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "worker": "node dist/worker.js",
+    "test": "npm run build && node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.0.0",
+    "firebase-admin": "^13.4.0",
+    "luxon": "^3.6.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/luxon": "^3.6.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0"
+  }
 }
