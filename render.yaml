@@ -1,0 +1,39 @@
+envVarGroups:
+  - name: finora-config
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: LIVE_REPORTS
+        value: "false"
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: META_VERIFY_TOKEN
+        sync: false
+      - key: META_ACCESS_TOKEN
+        sync: false
+      - key: META_PHONE_NUMBER_ID
+        sync: false
+      - key: META_BUSINESS_NUMBER
+        sync: false
+      - key: META_GRAPH_VERSION
+        sync: false
+      - key: META_TEMPLATE
+        sync: false
+services:
+  - type: web
+    name: finora-api
+    runtime: node
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: finora-config
+  - type: worker
+    name: finora-reports
+    runtime: node
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run worker
+    envVars:
+      - fromGroup: finora-config
