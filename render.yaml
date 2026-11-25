@@ -3,8 +3,6 @@ envVarGroups:
     envVars:
       - key: NODE_VERSION
         value: "22"
-      - key: LIVE_REPORTS
-        value: "false"
       - key: FIREBASE_DATABASE_URL
         value: https://finoraaaaaa-default-rtdb.asia-southeast1.firebasedatabase.app
 services:

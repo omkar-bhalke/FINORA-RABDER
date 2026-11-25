@@ -1,5 +1,7 @@
 name: Backend tests
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -7,5 +9,19 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22', cache: npm}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21'}
       - run: npm ci
-      - run: npm test
+      - name: Test delivery and activity logging on Firebase emulators
+        env:
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8182
+          FIREBASE_DATABASE_EMULATOR_HOST: 127.0.0.1:9001
+          FIREBASE_DATABASE_URL: https://demo-finora.firebaseio.com
+        run: |
+          curl -fsSL https://storage.googleapis.com/firebase-preview-drop/emulator/cloud-firestore-emulator-v1.19.8.jar -o "$RUNNER_TEMP/fs.jar"
+          curl -fsSL https://storage.googleapis.com/firebase-preview-drop/emulator/firebase-database-emulator-v4.11.2.jar -o "$RUNNER_TEMP/rtdb.jar"
+          java -jar "$RUNNER_TEMP/fs.jar" --host 127.0.0.1 --port 8182 > "$RUNNER_TEMP/fs.log" 2>&1 &
+          java -jar "$RUNNER_TEMP/rtdb.jar" --host 127.0.0.1 --port 9001 > "$RUNNER_TEMP/rtdb.log" 2>&1 &
+          curl --retry 20 --retry-connrefused --retry-delay 1 -sS http://127.0.0.1:8182/ -o /dev/null
+          curl --retry 20 --retry-connrefused --retry-delay 1 -sS 'http://127.0.0.1:9001/.json?ns=demo-finora' -o /dev/null
+          npm test

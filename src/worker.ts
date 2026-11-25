@@ -237,17 +237,19 @@ async function tick() {
     cursor = page.docs[page.size - 1];
   }
 }
-if (process.env.FINORA_WORKER_MODE !== "test")
+async function repeat(action: () => Promise<void>, failure: string) {
   for (;;) {
     try {
-      await tick();
+      await action();
     } catch {
-      console.error("scheduler_tick_failed");
-    }
-    try {
-      await flushActivity();
-    } catch {
-      console.error("report_log_sync_failed");
+      console.error(failure);
     }
     await delay(30000);
   }
+}
+if (process.env.FINORA_WORKER_MODE !== "test") {
+  await Promise.all([
+    repeat(tick, "scheduler_tick_failed"),
+    repeat(flushActivity, "report_log_sync_failed"),
+  ]);
+}
