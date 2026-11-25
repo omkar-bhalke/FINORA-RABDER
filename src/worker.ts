@@ -1,3 +1,4 @@
+import { flushActivity } from "./activity.js";
 import { db, need } from "./firebase.js";
 import { dueSlot, summarize, rupees, details } from "./report.js";
 import { DateTime } from "luxon";
@@ -130,6 +131,9 @@ export async function send(
       return false;
     t.set(history, {
       state: "sending",
+      generatedAt: Date.now(),
+      zone: p.zone,
+      logPending: true,
       start: slot.start,
       end: slot.end,
       attempts: (h?.attempts ?? 0) + 1,
@@ -161,6 +165,8 @@ export async function send(
       await history.update({
         state,
         httpStatus: response.status,
+        logPending: true,
+        updatedAt: Date.now(),
         retryAt: Date.now() + 120000,
       });
       return;
@@ -170,6 +176,8 @@ export async function send(
     const batch = db.batch();
     batch.update(history, {
       state: "accepted",
+      acceptedAt: Date.now(),
+      logPending: true,
       message,
       updatedAt: Date.now(),
     });
@@ -178,7 +186,11 @@ export async function send(
     });
     await batch.commit();
   } catch {
-    await history.update({ state: "unknown", updatedAt: Date.now() });
+    await history.update({
+      state: "unknown",
+      logPending: true,
+      updatedAt: Date.now(),
+    });
   }
 }
 async function tick() {
@@ -208,6 +220,11 @@ if (process.env.FINORA_WORKER_MODE !== "test")
       await tick();
     } catch {
       console.error("scheduler_tick_failed");
+    }
+    try {
+      await flushActivity();
+    } catch {
+      console.error("report_log_sync_failed");
     }
     await delay(30000);
   }

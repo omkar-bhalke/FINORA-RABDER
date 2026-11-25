@@ -5,6 +5,8 @@ envVarGroups:
         value: "22"
       - key: LIVE_REPORTS
         value: "false"
+      - key: FIREBASE_DATABASE_URL
+        value: https://finoraaaaaa-default-rtdb.asia-southeast1.firebasedatabase.app
       - key: FIREBASE_SERVICE_ACCOUNT
         sync: false
       - key: FIREBASE_STORAGE_BUCKET

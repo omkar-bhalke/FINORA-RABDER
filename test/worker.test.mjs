@@ -55,6 +55,40 @@ test(
         ),
         "accepted",
       );
+      if (process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
+        assert.match(
+          process.env.FIREBASE_DATABASE_EMULATOR_HOST,
+          /^127[.]0[.]0[.]1:\d+$/,
+        );
+        const { flushActivity, activityDb } = await import(
+          "../dist/activity.js"
+        );
+        await flushActivity();
+        const target = activityDb().ref(
+          "reportActivity/" + user.id + "/2026-11-25",
+        );
+        const logged = (await target.once("value")).val();
+        assert.equal(logged.state, "accepted");
+        assert.equal(logged.zone, "Asia/Kolkata");
+        assert.equal(logged.scheduledAt, period);
+        assert.ok(
+          logged.generatedAt > 0 && logged.acceptedAt >= logged.generatedAt,
+        );
+        assert.equal(logged.recipient, undefined);
+        const hist = user.collection("reportHistory").doc("2026-11-25");
+        await hist.update({
+          logPending: true,
+          delivery: "delivered",
+          deliveryAt: Date.now(),
+        });
+        await flushActivity();
+        assert.equal(
+          (await target.once("value")).child("delivery").val(),
+          "delivered",
+        );
+        await target.remove();
+        await activityDb().goOffline();
+      }
       await pref.update({ consent: false });
       await send(await pref.get(), period + 86400000, fake);
       assert.equal(sends, 1);

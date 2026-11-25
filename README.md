@@ -27,3 +27,5 @@ Use an additional approved template named by META_DETAIL_TEMPLATE for optional r
 DELETE /v1/account requires a sign-in in the last five minutes. It removes the profile image, per-user Firestore records, challenge records and Firebase Auth account. Provide Firebase Admin permissions only on the intended project.
 
 The emulator integration test injects a mock transport and exercises concurrent scheduling, verification gating and revocation without contacting Meta. Run FIRESTORE_EMULATOR_HOST=127.0.0.1:8181 npm test against a local emulator. Without an emulator, the integration test is skipped.
+
+See [Deployment](DEPLOYMENT.md) for Firebase Realtime Database, Android service discovery and bot logs.

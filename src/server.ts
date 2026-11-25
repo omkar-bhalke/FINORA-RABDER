@@ -1,3 +1,4 @@
+import { activityDb } from "./activity.js";
 import express from "express";
 import { getStorage } from "firebase-admin/storage";
 import rateLimit from "express-rate-limit";
@@ -8,7 +9,7 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 import { db, auth, appCheck, need } from "./firebase.js";
-import { summarize } from "./report.js";
+import { summarize, details } from "./report.js";
 const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
@@ -98,6 +99,8 @@ app.post(
             if (prev && (ranks[prev.delivery] ?? 0) < ranks[status.status])
               t.update(report, {
                 delivery: status.status,
+                logPending: true,
+                updatedAt: Date.now(),
                 deliveryAt: Number(status.timestamp) * 1000,
               });
           });
@@ -132,7 +135,25 @@ app.get("/v1/preview", async (_req, res) => {
     .where("time", ">=", start)
     .where("time", "<", end)
     .get();
-  res.json({ start, end, ...summarize(rows.docs.map((d) => d.data())) });
+  const user = db.doc("users/" + res.locals.uid);
+  const pref = (
+    await user.collection("reportPreferences").doc("daily").get()
+  ).data();
+  const fields = Array.isArray(pref?.fields) ? pref.fields : [];
+  const entries = rows.docs.map((d) => d.data());
+  const prior = fields.includes("balances")
+    ? await user.collection("transactions").where("time", "<", start).get()
+    : null;
+  const extra = fields.length
+    ? details(
+        entries,
+        (await user.get()).data() ?? {},
+        prior?.docs.map((d) => d.data()) ?? [],
+        pref?.zone ?? "UTC",
+        fields,
+      )
+    : null;
+  res.json({ start, end, ...summarize(entries), extra });
 });
 app.post("/v1/recipient-challenge", async (_req, res) => {
   const uid = res.locals.uid;
@@ -187,6 +208,9 @@ app.delete("/v1/account", async (req, res) => {
       await db.collection("outboundMessages").doc(id).delete();
   }
   await db.recursiveDelete(user);
+  await activityDb()
+    .ref("reportActivity/" + uid)
+    .remove();
   const challenges = await db
     .collection("recipientChallenges")
     .where("uid", "==", uid)
